@@ -1,0 +1,10 @@
+*.log
+*.pkr.hcl.out
+*.pkr.hcl.vars
+venv/
+.pytest_cache/
+__pycache__/
+.ansible-lint
+.yamllint
+secrets.yml
+*.iso

@@ -1,0 +1,53 @@
+---
+- name: Deploy VM from Golden Template
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    vcenter_server: "vcenter.example.com"
+    vcenter_user: "administrator@vsphere.local"
+    vcenter_password: "password"
+    datacenter: "Datacenter"
+    cluster: "Cluster"
+    datastore: "datastore1"
+    template_name: "ubuntu-golden-latest"
+    vm_name: "new-server-01"
+    vm_network: "VM Network"
+    vm_ip: "192.168.1.50"
+    vm_netmask: "255.255.255.0"
+    vm_gateway: "192.168.1.1"
+
+  tasks:
+    - name: Clone VM from Template
+      community.vmware.vmware_guest:
+        hostname: "{{ vcenter_server }}"
+        username: "{{ vcenter_user }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: false
+        datacenter: "{{ datacenter }}"
+        cluster: "{{ cluster }}"
+        datastore: "{{ datastore }}"
+        name: "{{ vm_name }}"
+        template: "{{ template_name }}"
+        state: poweredon
+        networks:
+          - name: "{{ vm_network }}"
+            ip: "{{ vm_ip }}"
+            netmask: "{{ vm_netmask }}"
+            gateway: "{{ vm_gateway }}"
+        customization:
+          hostname: "{{ vm_name }}"
+      register: deploy_status
+
+    - name: Wait for SSH to become available
+      ansible.builtin.wait_for:
+        host: "{{ vm_ip }}"
+        port: 22
+        timeout: 300
+
+- name: Configure the New VM
+  hosts: all
+  become: true
+  roles:
+    - base
+    - security
